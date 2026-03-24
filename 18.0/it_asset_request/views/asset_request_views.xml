@@ -5,8 +5,8 @@
         <field name="model">it.asset.request</field>
         <field name="arch" type="xml">
             <list string="Solicitudes de Activos">
-                <field name="name"/>
-                <field name="employee_name"/>
+                <field name="name" readonly="1"/>
+                <field name="employee_id"/>
                 <field name="asset_type"/>
                 <field name="priority" widget="badge" 
                        decoration-danger="priority == 'alta'" 
@@ -25,44 +25,46 @@
         <field name="name">it.asset.request.form</field>
         <field name="model">it.asset.request</field>
         <field name="arch" type="xml">
-            <form string="Solicitud de Activo">
+            <form string="Detalle de Solicitud">
                 <header>
-                    <button name="action_submit" string="Enviar" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_submit" string="Enviar a Revisión" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_approve" string="Aprobar" type="object" class="oe_highlight" invisible="state != 'submitted'"/>
                     <button name="action_reject" string="Rechazar" type="object" invisible="state != 'submitted'"/>
                     
-                    <button name="%(action_report_it_asset_request)d" string="Imprimir Comprobante" type="action" icon="fa-print"/>
+                    <button name="%(action_report_it_asset_request)d" string="Imprimir PDF" type="action" icon="fa-print"/>
                     
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,rejected"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
-                        <h1><field name="name" readonly="True"/></h1>
-                        <h2><field name="display_name_info" readonly="True" force_save="True"/></h2>
+                        <label for="name" string="Número de Solicitud"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h2 class="text-muted"><field name="display_name_info" readonly="1" force_save="1"/></h2>
                     </div>
-                    
                     <group>
-                        <group>
-                            <field name="employee_name" readonly="state != 'draft'"/>
-                            <field name="employee_email" readonly="state != 'draft'"/>
-                            <field name="request_date" readonly="True"/>
+                        <group name="solicitante" string="Información General">
+                            <field name="employee_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="employee_email"/>
                             <field name="asset_type" readonly="state != 'draft'"/>
                             <field name="attachment" filename="attachment_name" readonly="state != 'draft'"/>
-                            <field name="attachment_name" invisible="True"/>
+                            <field name="attachment_name" invisible="1"/>
                         </group>
-                        <group>
+                        <group name="logistica" string="Prioridad y Costos">
+                            <field name="request_date"/>
                             <field name="priority" readonly="state != 'draft'"/>
-                            <field name="is_urgent" readonly="True" force_save="True"/>
+                            <field name="is_urgent" readonly="1" force_save="1"/>
                             <field name="estimated_cost" readonly="state != 'draft'"/>
-                            
-                            <field name="approved_by" invisible="state not in ('approved', 'rejected')"/>
-                            <field name="approval_date" invisible="state not in ('approved', 'rejected')"/>
                         </group>
                     </group>
-                    
                     <notebook>
-                        <page string="Justificación" name="justification_page">
-                            <field name="justification" readonly="state != 'draft'"/>
+                        <page string="Notas de Justificación" name="justification">
+                            <field name="justification" placeholder="Describa el motivo de la solicitud..." readonly="state != 'draft'"/>
+                        </page>
+                        <page string="Auditoría de Aprobación" name="approval" invisible="state not in ('approved', 'rejected')">
+                            <group>
+                                <field name="approved_by"/>
+                                <field name="approval_date"/>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -75,14 +77,13 @@
         <field name="name">it.asset.request.search</field>
         <field name="model">it.asset.request</field>
         <field name="arch" type="xml">
-            <search string="Buscar Solicitudes">
+            <search>
                 <field name="name"/>
-                <field name="employee_name"/>
-                <field name="asset_type"/>
-                <filter string="Mis Aprobaciones Pendientes" name="pending_approval" domain="[('state', '=', 'submitted')]"/>
+                <field name="employee_id"/>
+                <filter string="Pendientes de Aprobación" name="pending" domain="[('state', '=', 'submitted')]"/>
                 <group expand="0" string="Agrupar Por">
-                    <filter string="Estado" name="group_by_state" context="{'group_by': 'state'}"/>
-                    <filter string="Tipo de Activo" name="group_by_asset" context="{'group_by': 'asset_type'}"/>
+                    <filter string="Estado" name="state" context="{'group_by': 'state'}"/>
+                    <filter string="Tipo de Activo" name="asset" context="{'group_by': 'asset_type'}"/>
                 </group>
             </search>
         </field>

@@ -18,7 +18,7 @@
                         <div class="row mt32 mb32">
                             <div class="col-6">
                                 <strong>Referencia:</strong> <span t-field="o.name"/><br/>
-                                <strong>Empleado:</strong> <span t-field="o.employee_name"/><br/>
+                                <strong>Empleado:</strong> <span t-field="o.employee_id.name"/><br/>
                                 <strong>Correo:</strong> <span t-field="o.employee_email"/><br/>
                                 <strong>Fecha:</strong> <span t-field="o.request_date"/><br/>
                             </div>
