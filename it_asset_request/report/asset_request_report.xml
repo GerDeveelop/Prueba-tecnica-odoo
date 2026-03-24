@@ -1,0 +1,51 @@
+<odoo>
+    <record id="action_report_it_asset_request" model="ir.actions.report">
+        <field name="name">Comprobante de Solicitud</field>
+        <field name="model">it.asset.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">it_asset_request.report_asset_request_template</field>
+        <field name="report_file">it_asset_request.report_asset_request_template</field>
+        <field name="binding_model_id" ref="model_it_asset_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_asset_request_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Comprobante de Solicitud de Activo TI</h2>
+                        <div class="row mt32 mb32">
+                            <div class="col-6">
+                                <strong>Referencia:</strong> <span t-field="o.name"/><br/>
+                                <strong>Empleado:</strong> <span t-field="o.employee_name"/><br/>
+                                <strong>Correo:</strong> <span t-field="o.employee_email"/><br/>
+                                <strong>Fecha:</strong> <span t-field="o.request_date"/><br/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Tipo de Activo:</strong> <span t-field="o.asset_type"/><br/>
+                                <strong>Prioridad:</strong> <span t-field="o.priority"/><br/>
+                                <strong>Costo Estimado:</strong> <span t-field="o.estimated_cost"/><br/>
+                                <strong>Estado:</strong> <span t-field="o.state"/><br/>
+                            </div>
+                        </div>
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <strong>Justificación:</strong>
+                                <p t-field="o.justification"/>
+                            </div>
+                        </div>
+                        <t t-if="o.state == 'approved'">
+                            <div class="row mt32">
+                                <div class="col-12">
+                                    <strong>Aprobado por:</strong> <span t-field="o.approved_by.name"/><br/>
+                                    <strong>Fecha de Aprobación:</strong> <span t-field="o.approval_date"/><br/>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

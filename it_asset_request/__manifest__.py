@@ -1,0 +1,20 @@
+{
+    'name': 'Portal de Solicitudes de Activos TI',
+    'version': '18.0.1.0.0',
+    'category': 'Human Resources',
+    'summary': 'Gestión de solicitudes internas de activos tecnológicos',
+    'description': 'Módulo para registrar y gestionar solicitudes de activos TI desde el sitio web y backoffice.',
+    'author': 'GerDev',
+    'depends': ['base', 'mail', 'website'],
+    'data': [
+        'security/ir.model.access.csv',
+        'data/sequence.xml',
+        'report/asset_request_report.xml',
+        'views/asset_request_views.xml',
+        'views/asset_request_menus.xml',
+        'views/website_templates.xml',
+        ],
+    'installable': True,
+    'application': True,
+    'license': 'LGPL-3',
+}
