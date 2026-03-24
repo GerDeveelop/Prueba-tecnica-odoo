@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="asset_request_form_template" name="Formulario de Solicitud de Activo">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure container mt-5 mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 col-md-10">
+                        
+                        <div class="text-center mb-4">
+                            <i class="fa fa-laptop fa-3x text-primary mb-3"></i>
+                            <h2 class="fw-bold">Solicitud de Activos TI</h2>
+                            <p class="text-muted">Complete el siguiente formulario para registrar su requerimiento de equipo tecnológico o licencias.</p>
+                        </div>
+
+                        <div class="card shadow-lg border-0 rounded-3">
+                            <div class="card-body p-5">
+                                <form action="/asset-request/submit" method="POST">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    
+                                    <h5 class="text-primary border-bottom pb-2 mb-4">
+                                        <i class="fa fa-user me-2"></i>Información del Solicitante
+                                    </h5>
+                                    
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <label for="employee_name" class="form-label fw-bold">Nombre Completo <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light"><i class="fa fa-id-badge"></i></span>
+                                                <input type="text" class="form-control" name="employee_name" id="employee_name" required="required" placeholder="Ej. Juan Pérez"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mt-3 mt-md-0">
+                                            <label for="email" class="form-label fw-bold">Correo Corporativo</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light"><i class="fa fa-envelope"></i></span>
+                                                <input type="email" class="form-control" name="email" id="email" placeholder="usuario@empresa.com"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 class="text-primary border-bottom pb-2 mb-4 mt-5">
+                                        <i class="fa fa-cubes me-2"></i>Detalles del Activo
+                                    </h5>
+                                    
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <label for="asset_type" class="form-label fw-bold">Tipo de Activo <span class="text-danger">*</span></label>
+                                            <select class="form-select" name="asset_type" id="asset_type" required="required">
+                                                <option value="" disabled="disabled" selected="selected">Seleccione una opción...</option>
+                                                <option value="laptop">💻 Laptop</option>
+                                                <option value="monitor">🖥️ Monitor</option>
+                                                <option value="teclado">⌨️ Teclado</option>
+                                                <option value="mouse">🖱️ Mouse</option>
+                                                <option value="licencia">🔑 Licencia de software</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mt-3 mt-md-0">
+                                            <label for="priority" class="form-label fw-bold">Nivel de Prioridad</label>
+                                            <select class="form-select" name="priority" id="priority">
+                                                <option value="baja">🟢 Baja (No urgente)</option>
+                                                <option value="media" selected="selected">🟡 Media (Normal)</option>
+                                                <option value="alta">🔴 Alta (Urgente/Crítico)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label for="estimated_cost" class="form-label fw-bold">Costo Estimado (Opcional)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">$</span>
+                                            <input type="number" step="0.01" min="0" class="form-control" name="estimated_cost" id="estimated_cost" placeholder="0.00"/>
+                                        </div>
+                                        <div class="form-text">Si conoce el valor aproximado del activo, indíquelo aquí.</div>
+                                    </div>
+                                    
+                                    <div class="mb-5">
+                                        <label for="justification" class="form-label fw-bold">Justificación de la solicitud <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" name="justification" id="justification" rows="4" required="required" placeholder="Explique detalladamente por qué requiere este activo para sus labores..."></textarea>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end border-top pt-4">
+                                        <button type="reset" class="btn btn-light btn-lg me-md-2 shadow-sm">
+                                            <i class="fa fa-eraser me-2"></i>Limpiar
+                                        </button>
+                                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                            <i class="fa fa-paper-plane me-2"></i>Enviar Solicitud
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="asset_request_detail_template" name="Detalle de Solicitud de Activo">
+        <t t-call="website.layout">
+            <div id="wrap" class="container mt-5 mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        
+                        <div class="alert alert-success d-flex align-items-center shadow-sm" role="alert">
+                            <i class="fa fa-check-circle fa-2x me-3"></i>
+                            <div>
+                                <h4 class="alert-heading mb-1">¡Solicitud Enviada con Éxito!</h4>
+                                <span>Tu solicitud ha sido registrada bajo la referencia <strong><t t-esc="asset_request.name"/></strong>.</span>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm mt-4 border-0 rounded-3">
+                            <div class="card-header text-bg-light border-bottom-0 pt-4 pb-3">
+                                <h5 class="mb-0 text-primary"><i class="fa fa-info-circle me-2"/>Detalles de tu Solicitud</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4 text-muted">Referencia</dt>
+                                    <dd class="col-sm-8 fw-bold"><t t-esc="asset_request.name"/></dd>
+
+                                    <dt class="col-sm-4 text-muted">Estado Actual</dt>
+                                    <dd class="col-sm-8">
+                                        <span class="badge text-bg-info">
+                                            <t t-esc="dict(asset_request._fields['state'].selection).get(asset_request.state)"/>
+                                        </span>
+                                    </dd>
+
+                                    <dt class="col-sm-4 text-muted">Empleado</dt>
+                                    <dd class="col-sm-8"><t t-esc="asset_request.employee_name"/></dd>
+
+                                    <dt class="col-sm-4 text-muted">Tipo de Activo</dt>
+                                    <dd class="col-sm-8"><t t-esc="dict(asset_request._fields['asset_type'].selection).get(asset_request.asset_type)"/></dd>
+
+                                    <dt class="col-sm-4 text-muted">Prioridad</dt>
+                                    <dd class="col-sm-8"><t t-esc="dict(asset_request._fields['priority'].selection).get(asset_request.priority)"/></dd>
+                                    
+                                    <dt class="col-sm-4 text-muted">Fecha</dt>
+                                    <dd class="col-sm-8"><t t-esc="asset_request.request_date" t-options='{"widget": "date"}'/></dd>
+                                    
+                                    <dt class="col-sm-4 text-muted mt-3">Justificación</dt>
+                                    <dd class="col-sm-8 mt-3">
+                                        <em><t t-esc="asset_request.justification or 'Sin justificación provista.'"/></em>
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="card-footer text-center bg-white border-top-0 pb-4">
+                                <a href="/asset-request" class="btn btn-outline-primary me-2"><i class="fa fa-plus me-1"/>Crear nueva solicitud</a>
+                                <a href="/" class="btn btn-outline-secondary"><i class="fa fa-home me-1"/>Volver al Inicio</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

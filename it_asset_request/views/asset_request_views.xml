@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_it_asset_request_list" model="ir.ui.view">
+        <field name="name">it.asset.request.list</field>
+        <field name="model">it.asset.request</field>
+        <field name="arch" type="xml">
+            <list string="Solicitudes de Activos">
+                <field name="name"/>
+                <field name="employee_name"/>
+                <field name="asset_type"/>
+                <field name="priority" widget="badge" 
+                       decoration-danger="priority == 'alta'" 
+                       decoration-warning="priority == 'media'" 
+                       decoration-info="priority == 'baja'"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'approved'" 
+                       decoration-info="state == 'submitted'" 
+                       decoration-muted="state == 'draft'" 
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_it_asset_request_form" model="ir.ui.view">
+        <field name="name">it.asset.request.form</field>
+        <field name="model">it.asset.request</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de Activo">
+                <header>
+                    <button name="action_submit" string="Enviar" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Aprobar" type="object" class="oe_highlight" invisible="state != 'submitted'"/>
+                    <button name="action_reject" string="Rechazar" type="object" invisible="state != 'submitted'"/>
+                    
+                    <button name="%(action_report_it_asset_request)d" string="Imprimir Comprobante" type="action" icon="fa-print"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="True"/></h1>
+                        <h2><field name="display_name_info" readonly="True" force_save="True"/></h2>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="employee_name" readonly="state != 'draft'"/>
+                            <field name="employee_email" readonly="state != 'draft'"/>
+                            <field name="request_date" readonly="True"/>
+                            <field name="asset_type" readonly="state != 'draft'"/>
+                            <field name="attachment" filename="attachment_name" readonly="state != 'draft'"/>
+                            <field name="attachment_name" invisible="True"/>
+                        </group>
+                        <group>
+                            <field name="priority" readonly="state != 'draft'"/>
+                            <field name="is_urgent" readonly="True" force_save="True"/>
+                            <field name="estimated_cost" readonly="state != 'draft'"/>
+                            
+                            <field name="approved_by" invisible="state not in ('approved', 'rejected')"/>
+                            <field name="approval_date" invisible="state not in ('approved', 'rejected')"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Justificación" name="justification_page">
+                            <field name="justification" readonly="state != 'draft'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_it_asset_request_search" model="ir.ui.view">
+        <field name="name">it.asset.request.search</field>
+        <field name="model">it.asset.request</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Solicitudes">
+                <field name="name"/>
+                <field name="employee_name"/>
+                <field name="asset_type"/>
+                <filter string="Mis Aprobaciones Pendientes" name="pending_approval" domain="[('state', '=', 'submitted')]"/>
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Estado" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Tipo de Activo" name="group_by_asset" context="{'group_by': 'asset_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>
