@@ -1,18 +1,47 @@
+# -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 class ItAssetRequest(models.Model):
+    """
+    Gestiona el ciclo de vida de las solicitudes de activos tecnológicos.
+    Hereda de mail.thread para auditoría y mail.activity.mixin para gestión de tareas.
+    """
     _name = 'it.asset.request'
-    _description = 'IT Asset Request'
-    # Heredamos mail.thread y mail.activity.mixin para tener el historial (chatter) nativo en Odoo
+    _description = 'Solicitud de Activos TI'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'id desc'
 
-    # Campos requeridos por la prueba técnica
-    name = fields.Char(string='Referencia', required=True, copy=False, readonly=True, default=lambda self: _('New'))
-    employee_name = fields.Char(string='Nombre del Empleado', required=True, tracking=True)
-    employee_email = fields.Char(string='Email')
-    request_date = fields.Date(string='Fecha de Solicitud', default=fields.Date.context_today)
+    # --- Campos de Identificación ---
+    name = fields.Char(
+        string='Referencia', 
+        required=True, 
+        copy=False, 
+        readonly=True, 
+        default=lambda self: _('Nuevo')
+    )
     
+    # --- Relaciones y Datos del Solicitante ---
+    employee_id = fields.Many2one(
+        'res.partner', 
+        string='Solicitante', 
+        required=True, 
+        tracking=True,
+        help="Persona o empleado que requiere el activo."
+    )
+    employee_email = fields.Char(
+        related='employee_id.email', 
+        string='Email Corporativo', 
+        store=True,
+        readonly=True
+    )
+    
+    # --- Detalles del Activo ---
+    request_date = fields.Date(
+        string='Fecha de Solicitud', 
+        default=fields.Date.context_today,
+        readonly=True
+    )
     asset_type = fields.Selection([
         ('laptop', 'Laptop'),
         ('monitor', 'Monitor'),
@@ -21,99 +50,85 @@ class ItAssetRequest(models.Model):
         ('licencia', 'Licencia de software')
     ], string='Tipo de Activo', required=True, tracking=True)
     
-    justification = fields.Text(string='Justificación')
     priority = fields.Selection([
         ('baja', 'Baja'),
         ('media', 'Media'),
         ('alta', 'Alta')
-    ], string='Prioridad', default='media')
-    
+    ], string='Prioridad', default='media', tracking=True)
+
+    # --- Gestión de Costos y Estado ---
+    estimated_cost = fields.Float(
+        string='Costo Estimado',
+        help="Valor aproximado del activo solicitado."
+    )
     state = fields.Selection([
         ('draft', 'Borrador'),
         ('submitted', 'Enviado'),
         ('approved', 'Aprobado'),
         ('rejected', 'Rechazado')
     ], string='Estado', default='draft', tracking=True)
-    
+
+    # --- Datos de Aprobación ---
     approved_by = fields.Many2one('res.users', string='Aprobado por', readonly=True)
     approval_date = fields.Datetime(string='Fecha de Aprobación', readonly=True)
-    is_urgent = fields.Boolean(string='Es Urgente')
-    estimated_cost = fields.Float(string='Costo Estimado')
     
-    # Campos de adjuntos explícitamente solicitados en el documento Word
-    attachment = fields.Binary(string='Adjunto')
-    attachment_name = fields.Char(string='Nombre del Adjunto')
+    # --- Información Adicional ---
+    justification = fields.Text(string='Justificación')
+    is_urgent = fields.Boolean(string='Es Urgente', help="Indica si el activo requiere prioridad inmediata.")
+    attachment = fields.Binary(string='Documento Adjunto')
+    attachment_name = fields.Char(string='Nombre del Archivo')
     
-    # Campo calculado para mostrar información resumida
-    display_name_info = fields.Char(string='Info de Solicitud', compute='_compute_display_name_info', store=True)
+    display_name_info = fields.Char(
+        string='Información Resumida', 
+        compute='_compute_display_name_info', 
+        store=True
+    )
+
+    # --- Lógica Computada y Eventos ---
 
     @api.model_create_multi
     def create(self, vals_list):
-        """
-        Sobrescribimos el método create para asignar automáticamente la secuencia 
-        configurada en data/sequence.xml cuando se crea un nuevo registro.
-        """
+        """ Asignación de secuencia automática al crear el registro. """
         for vals in vals_list:
-            if vals.get('name', _('New')) == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('it.asset.request') or _('New')
-        return super().create(vals_list)
+            if vals.get('name', _('Nuevo')) == _('Nuevo'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('it.asset.request') or _('Nuevo')
+        return super(ItAssetRequest, self).create(vals_list)
 
-    @api.depends('asset_type', 'employee_name', 'priority')
+    @api.depends('asset_type', 'employee_id', 'priority')
     def _compute_display_name_info(self):
-        """
-        Calcula un string informativo basado en el tipo de activo, empleado y prioridad.
-        """
+        """ Genera una etiqueta descriptiva para facilitar la búsqueda visual. """
         for record in self:
-            if record.asset_type and record.employee_name and record.priority:
-                record.display_name_info = f"{dict(record._fields['asset_type'].selection).get(record.asset_type)} - {record.employee_name} - {record.priority.capitalize()}"
-            else:
-                record.display_name_info = ""
+            if record.asset_type and record.employee_id:
+                type_label = dict(self._fields['asset_type'].selection).get(record.asset_type)
+                record.display_name_info = f"{type_label} - {record.employee_id.name}"
 
     @api.onchange('asset_type')
     def _onchange_asset_type(self):
-        """
-        Marca automáticamente la solicitud como urgente si se selecciona una Laptop o Licencia.
-        """
-        if self.asset_type in ['laptop', 'licencia']:
-            self.is_urgent = True
-        else:
-            self.is_urgent = False
+        """ Lógica proactiva: las laptops y licencias se marcan como urgentes por defecto. """
+        self.is_urgent = self.asset_type in ['laptop', 'licencia']
 
     @api.constrains('estimated_cost')
     def _check_estimated_cost(self):
-        """
-        Valida que el usuario no pueda ingresar valores negativos en el costo estimado.
-        """
+        """ Validación de integridad de datos financieros. """
         for record in self:
             if record.estimated_cost < 0:
-                raise ValidationError(_("El costo estimado no puede ser negativo."))
+                raise ValidationError(_("El costo estimado no puede ser un valor negativo."))
 
-    # --- MÉTODOS DE TRANSICIÓN DE ESTADO ---
-    
+    # --- Acciones de Workflow ---
+
     def action_submit(self):
-        """Transición a estado 'Enviado'"""
+        """ Pasa la solicitud a revisión por parte del equipo de TI. """
+        self.ensure_one()
         self.write({'state': 'submitted'})
 
     def action_approve(self):
-        """
-        Transición a estado 'Aprobado'.
-        Valida que esté en 'submitted' y guarda el usuario que aprueba y la fecha actual.
-        """
-        for record in self:
-            if record.state != 'submitted':
-                raise ValidationError(_("Solo se pueden aprobar solicitudes en estado 'Enviado'."))
-            record.write({
-                'state': 'approved',
-                'approved_by': self.env.user.id,
-                'approval_date': fields.Datetime.now()
-            })
+        """ Finaliza la solicitud registrando auditoría del aprobador. """
+        self.write({
+            'state': 'approved',
+            'approved_by': self.env.user.id,
+            'approval_date': fields.Datetime.now()
+        })
 
     def action_reject(self):
-        """
-        Transición a estado 'Rechazado'.
-        Valida que esté en estado 'submitted' antes de rechazar.
-        """
-        for record in self:
-            if record.state != 'submitted':
-                raise ValidationError(_("Solo se pueden rechazar solicitudes en estado 'Enviado'."))
-            record.write({'state': 'rejected'})
+        """ Marca la solicitud como rechazada. """
+        self.write({'state': 'rejected'})

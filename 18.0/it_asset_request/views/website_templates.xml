@@ -126,7 +126,7 @@
                                     </dd>
 
                                     <dt class="col-sm-4 text-muted">Empleado</dt>
-                                    <dd class="col-sm-8"><t t-esc="asset_request.employee_name"/></dd>
+                                    <dd class="col-sm-8"><t t-esc="asset_request.employee_id.name"/></dd>
 
                                     <dt class="col-sm-4 text-muted">Tipo de Activo</dt>
                                     <dd class="col-sm-8"><t t-esc="dict(asset_request._fields['asset_type'].selection).get(asset_request.asset_type)"/></dd>
